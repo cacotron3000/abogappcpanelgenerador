@@ -897,6 +897,53 @@ function cambiarVista(vistaId) {
 
 let generadorNativoMontado = false;
 let generadorNativoMontando = false;
+let generadorTemaObservadorIniciado = false;
+
+function obtenerTemaActualApp() {
+  const rootStyles = getComputedStyle(document.documentElement);
+  const bodyStyles = getComputedStyle(document.body);
+  return {
+    colorPrincipal: rootStyles.getPropertyValue("--color-principal").trim(),
+    colorSecundario: rootStyles.getPropertyValue("--color-secundario").trim(),
+    colorTexto: rootStyles.getPropertyValue("--color-texto").trim(),
+    colorFondo: rootStyles.getPropertyValue("--color-fondo").trim(),
+    colorGris: rootStyles.getPropertyValue("--color-gris").trim(),
+    colorDestacado: rootStyles.getPropertyValue("--color-destacado").trim(),
+    radius: rootStyles.getPropertyValue("--radius").trim(),
+    fontFamily: bodyStyles.fontFamily,
+    fontSize: rootStyles.fontSize,
+    darkMode: document.body.classList.contains("dark-mode")
+  };
+}
+
+function sincronizarTemaGeneradorNativo() {
+  const mount = document.getElementById("generadorMount");
+  if (!mount) return;
+  const tema = obtenerTemaActualApp();
+  mount.style.setProperty("--app-color-principal", tema.colorPrincipal || "#4c8b6e");
+  mount.style.setProperty("--app-color-secundario", tema.colorSecundario || "#7f9c8a");
+  mount.style.setProperty("--app-color-texto", tema.colorTexto || "#222222");
+  mount.style.setProperty("--app-color-fondo", tema.colorFondo || "#f5f7f6");
+  mount.style.setProperty("--app-color-gris", tema.colorGris || "#555555");
+  mount.style.setProperty("--app-color-destacado", tema.colorDestacado || "#e2f0ea");
+  mount.style.setProperty("--app-radius", tema.radius || "20px");
+  mount.style.fontFamily = tema.fontFamily || "";
+  mount.style.fontSize = tema.fontSize || "";
+  mount.classList.toggle("dark-mode", !!tema.darkMode);
+}
+
+function iniciarSincronizacionTemaGeneradorNativo() {
+  if (generadorTemaObservadorIniciado) return;
+  generadorTemaObservadorIniciado = true;
+  sincronizarTemaGeneradorNativo();
+
+  const observer = new MutationObserver(() => {
+    sincronizarTemaGeneradorNativo();
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ["class", "style"] });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
+  window.addEventListener("resize", sincronizarTemaGeneradorNativo);
+}
 
 async function montarGeneradorNativo() {
   const mount = document.getElementById("generadorMount");
@@ -941,6 +988,7 @@ async function montarGeneradorNativo() {
     });
 
     generadorNativoMontado = true;
+    sincronizarTemaGeneradorNativo();
   } catch (error) {
     console.error("No fue posible montar el generador nativo:", error);
     mount.innerHTML = "<p style='padding:16px;color:#b42318'>No fue posible cargar el generador. Revisa que exista generador/Generador_Escritos.html.</p>";
@@ -978,6 +1026,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const hoyExportSemanal = document.getElementById("hoyExportSemanal");
   const sidebar = document.querySelector(".sidebar");
   const toggleSidebarBtn = document.getElementById("toggleSidebar");
+  iniciarSincronizacionTemaGeneradorNativo();
   window.updateSyncStatus = (state = "syncing", text = "") => {
     if (!syncStatus) return;
     syncStatus.classList.remove("ok", "syncing", "error");

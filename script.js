@@ -1137,7 +1137,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (const t of criticas) {
       await window.supabaseSync.pullTabla?.(t);
     }
-    setTimeout(() => window.supabaseSync.pullAll(), 300);
+    setTimeout(() => {
+      window.supabaseSync.pullAll().then(() => {
+        if (typeof window.refrescarDatos === "function") {
+          window.refrescarDatos([
+            "clientes",
+            "tareasDia",
+            "audiencias",
+            "dashboard",
+            "hoy",
+            "notificaciones",
+            "internas",
+          ]);
+        }
+        if (typeof cargarTareasInternas === "function") {
+          cargarTareasInternas();
+          cargarTareasInternasArchivadas();
+        }
+      });
+    }, 300);
     window.supabaseSync.subscribeRealtime();
     window.updateSyncStatus("ok");
   }

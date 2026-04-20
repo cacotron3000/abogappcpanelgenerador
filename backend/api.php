@@ -168,6 +168,113 @@ function nextSequenceValue(PDO $pdo, string $name, int $min = 1): int {
     }
 }
 
+function aiPresets(): array {
+    return [
+        'formal_juridico' => [
+            'system' => 'Eres asistente jurídico para Chile. Responde en español claro, tono formal, estructura por secciones y no inventes hechos ni normas.',
+            'temperature' => 0.3,
+            'max_output_tokens' => 700,
+        ],
+        'resumen_ejecutivo' => [
+            'system' => 'Resume en español de Chile para toma de decisiones. Entrega: resumen, riesgos y próximos pasos.',
+            'temperature' => 0.2,
+            'max_output_tokens' => 500,
+        ],
+        'correo_cliente' => [
+            'system' => 'Redacta correos profesionales para clientes en español de Chile, claros y empáticos, incluyendo asunto sugerido y cierre.',
+            'temperature' => 0.4,
+            'max_output_tokens' => 450,
+        ],
+    ];
+}
+
+function callOpenAI(array $config, string $systemPrompt, string $userPrompt, float $temperature, int $maxTokens): string {
+    $apiKey = trim((string) ($config['openai_api_key'] ?? ''));
+    if ($apiKey === '') {
+        apiFail('El asistente IA no está configurado (falta openai_api_key).', 501);
+    }
+    if (!function_exists('curl_init')) {
+        apiFail('cURL no está disponible en el servidor.', 500);
+    }
+
+    $model = trim((string) ($config['openai_model'] ?? 'gpt-4.1-mini'));
+    $payload = [
+        'model' => $model,
+        'temperature' => max(0, min(2, $temperature)),
+        'max_output_tokens' => max(100, min(2000, $maxTokens)),
+        'input' => [
+            [
+                'role' => 'system',
+                'content' => [['type' => 'input_text', 'text' => $systemPrompt]],
+            ],
+            [
+                'role' => 'user',
+                'content' => [['type' => 'input_text', 'text' => $userPrompt]],
+            ],
+        ],
+    ];
+
+    $ch = curl_init('https://api.openai.com/v1/responses');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        CURLOPT_TIMEOUT => (int) ($config['openai_timeout_sec'] ?? 30),
+    ]);
+    $raw = curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+
+    if ($raw === false || $curlErr) {
+        apiFail('No fue posible conectar con OpenAI: ' . $curlErr, 502);
+    }
+
+    $json = json_decode((string) $raw, true);
+    if ($httpCode < 200 || $httpCode >= 300) {
+        $msg = is_array($json) ? ($json['error']['message'] ?? 'Error de OpenAI') : 'Error de OpenAI';
+        apiFail('OpenAI devolvió error: ' . $msg, 502);
+    }
+
+    $text = trim((string) ($json['output_text'] ?? ''));
+    if ($text !== '') return $text;
+
+    if (isset($json['output']) && is_array($json['output'])) {
+        $parts = [];
+        foreach ($json['output'] as $item) {
+            if (!is_array($item)) continue;
+            $content = $item['content'] ?? null;
+            if (!is_array($content)) continue;
+            foreach ($content as $chunk) {
+                if (!is_array($chunk)) continue;
+                if (($chunk['type'] ?? '') === 'output_text' && isset($chunk['text'])) {
+                    $rawText = $chunk['text'];
+                    if (is_array($rawText)) {
+                        $rawText = $rawText['value'] ?? '';
+                    }
+                    $value = trim((string) $rawText);
+                    if ($value !== '') $parts[] = $value;
+                } elseif (isset($chunk['text']) && is_string($chunk['text'])) {
+                    $value = trim($chunk['text']);
+                    if ($value !== '') $parts[] = $value;
+                } elseif (isset($chunk['text']) && is_array($chunk['text'])) {
+                    $value = trim((string) ($chunk['text']['value'] ?? ''));
+                    if ($value !== '') $parts[] = $value;
+                }
+            }
+        }
+        $joined = trim(implode("\n\n", $parts));
+        if ($joined !== '') return $joined;
+    }
+
+    apiFail('OpenAI no devolvió texto utilizable.', 502);
+    return '';
+}
+
 switch ($action) {
     case 'pull_table': {
         $table = $_GET['table'] ?? '';
@@ -376,6 +483,38 @@ switch ($action) {
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->execute();
         echo json_encode(['data' => $stmt->fetchAll()]);
+        break;
+    }
+
+    case 'chat_ai': {
+        if (empty($config['openai_enabled'])) {
+            apiFail('El asistente IA está deshabilitado en el servidor.', 403);
+        }
+        $mensaje = trim((string) ($payload['mensaje'] ?? ''));
+        $presetId = trim((string) ($payload['preset'] ?? 'formal_juridico'));
+        $contexto = $payload['contexto'] ?? null;
+        if ($mensaje === '') {
+            apiFail('Debes enviar un mensaje.', 422);
+        }
+        if (mb_strlen($mensaje) > 6000) {
+            apiFail('El mensaje es demasiado largo (máx. 6000 caracteres).', 422);
+        }
+        $presets = aiPresets();
+        $preset = $presets[$presetId] ?? $presets['formal_juridico'];
+        $contextoTexto = '';
+        if (is_array($contexto) && $contexto) {
+            $contextoTexto = "\n\nContexto de la app:\n" . json_encode($contexto, JSON_UNESCAPED_UNICODE);
+        }
+
+        $respuesta = callOpenAI(
+            $config,
+            (string) $preset['system'],
+            $mensaje . $contextoTexto,
+            (float) $preset['temperature'],
+            (int) $preset['max_output_tokens']
+        );
+        logAudit($pdo, 'chat_ai', 'ai', null, ['preset' => $presetId, 'chars' => mb_strlen($mensaje)]);
+        echo json_encode(['data' => ['respuesta' => $respuesta, 'preset' => $presetId]]);
         break;
     }
 

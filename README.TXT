@@ -109,6 +109,19 @@ Esta versión incluye una capa de integración para funcionar en hosting cPanel 
    - Administrador por defecto: `admin@gjabogados.cl` / `R@bula04` (recomendado cambiar clave tras primer acceso).
    - El campo `password_hash` debe ser generado con `password_hash` de PHP.
 
+5. **Activar Asistente IA (ChatGPT)**
+   - En `backend/config.php` agrega:
+     - `openai_enabled` => `true`
+     - `openai_api_key` => tu API key de OpenAI
+     - `openai_model` => por ejemplo `gpt-4.1-mini`
+     - `openai_timeout_sec` => recomendado `30`
+   - Reinicia PHP-FPM/Apache si tu hosting cachea configuración.
+   - En la app, abre el botón **Asistente IA** en la barra lateral.
+   - Presets incluidos:
+     - `formal_juridico`
+     - `resumen_ejecutivo`
+     - `correo_cliente`
+
 ### Notas técnicas
 
 - La app mantiene los nombres de funciones `supabaseSync`, `supabaseAuth`, `sb` y `sbAdmin` por compatibilidad con el código existente.

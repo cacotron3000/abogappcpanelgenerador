@@ -69,14 +69,12 @@
 
   async function pullTabla(tabla) {
     try {
-      const since = localStorage.getItem(`sync_since_${tabla}`) || "";
-      const { data } = await apiRequest("pull_table", { query: { table: tabla, since, limit: 1500, offset: 0 } });
+      const { data } = await apiRequest("pull_table", { query: { table: tabla, limit: 1500, offset: 0 } });
       if (Array.isArray(data)) {
         const actual = JSON.parse(localStorage.getItem(localKey(tabla)) || "[]");
         const mapa = new Map(actual.map((x) => [x.id, x]));
         data.forEach((row) => mapa.set(row.id, row));
         localStorage.setItem(localKey(tabla), JSON.stringify(Array.from(mapa.values())));
-        localStorage.setItem(`sync_since_${tabla}`, new Date().toISOString());
       }
     } catch (error) {
       console.error(`Error al descargar ${tabla}:`, error);
@@ -85,9 +83,8 @@
 
   async function pullAll() {
     try {
-      const since = localStorage.getItem("sync_since_all") || "";
       const { data } = await apiRequest("pull_all", {
-        query: { tables: TABLAS.join(","), since, limit: 1500, offset: 0 },
+        query: { tables: TABLAS.join(","), limit: 1500, offset: 0 },
       });
       TABLAS.forEach((tabla) => {
         if (Array.isArray(data?.[tabla])) {
@@ -97,7 +94,6 @@
           localStorage.setItem(localKey(tabla), JSON.stringify(Array.from(mapa.values())));
         }
       });
-      localStorage.setItem("sync_since_all", new Date().toISOString());
     } catch (error) {
       console.error("Error en pullAll:", error);
     }
@@ -211,6 +207,21 @@
     }
   }
 
+  async function chatIA({ mensaje, preset = "formal_juridico", contexto = null } = {}) {
+    const res = await apiRequest("chat_ai", {
+      method: "POST",
+      body: { mensaje, preset, contexto },
+    });
+    const data = res?.data ?? res ?? {};
+    const respuesta = String(
+      data?.respuesta ||
+      data?.output_text ||
+      data?.text ||
+      ""
+    ).trim();
+    return { ...data, respuesta };
+  }
+
   window.supabaseSync = {
     pullTabla,
     pullAll,
@@ -223,6 +234,7 @@
     subscribeNotificaciones,
     guardarTema,
     obtenerTema,
+    chatIA,
     async fetchAuditRecent(limit = 50) {
       try {
         const { data } = await apiRequest("audit_recent", { query: { limit } });

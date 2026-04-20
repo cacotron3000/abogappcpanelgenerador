@@ -645,12 +645,46 @@ function abrirQuickPanel(titulo, contenidoHtml) {
   if (!panel || !t || !c) return;
   t.textContent = titulo;
   c.innerHTML = contenidoHtml;
+  const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
+  panel.style.position = "absolute";
+  panel.style.top = `${scrollActual}px`;
+  panel.style.height = `${window.innerHeight}px`;
   panel.classList.remove("oculto");
+  window.__quickPanelJustOpenedAt = Date.now();
+}
+
+function normalizarTipoDetalle(tipo, data = {}) {
+  const bruto = String(tipo || "").toLowerCase().trim();
+  const mapa = {
+    tarea: "tarea",
+    tareas: "tarea",
+    gestion: "tarea",
+    gestiones: "tarea",
+    "tarea_dia": "tarea_dia",
+    "tareas_dia": "tarea_dia",
+    "tarea-interna": "tarea_interna",
+    "tarea_interna": "tarea_interna",
+    "tareas_internas": "tarea_interna",
+    interna: "tarea_interna",
+    cliente: "cliente",
+    clientes: "cliente",
+    audiencia: "audiencia",
+    audiencias: "audiencia"
+  };
+  if (mapa[bruto]) return mapa[bruto];
+
+  // Fallback por forma de datos, para no mostrar paneles cruzados.
+  if (data && (data.correo || data.telefono || data.rut)) return "cliente";
+  if (data && (data.modalidad || data.hora || data.notas)) return "audiencia";
+  if (data && (data.expedienteId || data.descripcion || data.estado)) return "tarea";
+  if (data && (data.asignadosA || data.proximaAccion || data.fechaFin)) return "tarea_interna";
+  return bruto;
 }
 
 function mostrarDetalleEntidad(tipo, data) {
   if (!data) return;
-  if (tipo === "tarea") {
+  const tipoNorm = normalizarTipoDetalle(tipo, data);
+  if (tipoNorm === "tarea") {
     abrirQuickPanel(
       `Detalle tarea: ${data.titulo || data.texto || "Sin título"}`,
       `<h4>Resumen</h4>
@@ -669,7 +703,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "tarea_dia") {
+  if (tipoNorm === "tarea_dia") {
     const clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
     const cliente = clientes.find((c) => c.id === data.clienteId);
     abrirQuickPanel(
@@ -687,7 +721,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "tarea_interna") {
+  if (tipoNorm === "tarea_interna") {
     const clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
     const cliente = clientes.find((c) => c.id === data.clienteId);
     abrirQuickPanel(
@@ -705,7 +739,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "cliente") {
+  if (tipoNorm === "cliente") {
     abrirQuickPanel(
       `Cliente: ${data.nombre || "Sin nombre"}`,
       `<h4>Resumen</h4><p><strong>Correo:</strong> ${data.correo || "-"}</p>
@@ -717,7 +751,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "audiencia") {
+  if (tipoNorm === "audiencia") {
     abrirQuickPanel(
       `Audiencia: ${data.titulo || "Sin título"}`,
       `<h4>Resumen</h4><p><strong>Tipo:</strong> ${data.tipo || "-"}</p>
@@ -726,7 +760,9 @@ function mostrarDetalleEntidad(tipo, data) {
        <p><strong>Notas:</strong> ${data.notas || "-"}</p>
        <button class="quickpanel-edit-btn" onclick="if (typeof editarAudiencia==='function'){document.getElementById('quickPanel')?.classList.add('oculto'); editarAudiencia(${data.id});}">✏️ Editar</button>`
     );
+    return;
   }
+  abrirQuickPanel(`Detalle: ${tipo || "registro"}`, `<pre>${JSON.stringify(data, null, 2)}</pre>`);
 }
 window.mostrarDetalleEntidad = mostrarDetalleEntidad;
 
@@ -787,11 +823,23 @@ function actualizarKpiResumen() {
 
 // Manejo de capas de modales para permitir abrir un modal sobre otro
 let modalZIndex = 12000;
+function ajustarPosicionModalesVisibles() {
+  const abiertos = document.querySelectorAll("#app > .modal:not(.oculto), body > .modal:not(.oculto)");
+  abiertos.forEach((modal) => {
+    modal.style.position = "fixed";
+    modal.style.inset = "0";
+    modal.style.minHeight = "100vh";
+    modal.style.left = "0";
+    modal.style.right = "0";
+  });
+}
+
 function mostrarModal(modal) {
   if (!modal) return;
   modalZIndex += 1;
   modal.style.zIndex = modalZIndex;
   modal.classList.remove("oculto");
+  ajustarPosicionModalesVisibles();
 }
 
 function mostrarAlertaModal(mensaje, driveLink) {
@@ -873,17 +921,10 @@ function cambiarVista(vistaId) {
     cargarTareasDiaArchivadas();
   } else if (vistaId === "audiencias" && typeof cargarAudiencias === "function") {
     cargarAudiencias();
-    if (typeof mostrarAudienciasProximas === "function") {
-      mostrarAudienciasProximas();
-    }
   } else if (vistaId === "hoy") {
     renderVistaHoy();
   } else if (vistaId === "generador") {
-    const generadorFrame = document.getElementById("generadorFrame");
-    if (generadorFrame && !generadorFrame.src) {
-      generadorFrame.src = "generador/Generador_Escritos.html";
-    }
-    setTimeout(enviarTemaAGenerador, 60);
+    montarGeneradorNativo();
   }
 
   // 2) Ocultamos todas las secciones
@@ -899,47 +940,108 @@ function cambiarVista(vistaId) {
   if (botonActivo) botonActivo.classList.add("active");
 }
 
+let generadorNativoMontado = false;
+let generadorNativoMontando = false;
+let generadorTemaObservadorIniciado = false;
 
-function enviarTemaAGenerador() {
-  const generadorFrame = document.getElementById("generadorFrame");
-  if (!generadorFrame || !generadorFrame.contentWindow) return;
-
+function obtenerTemaActualApp() {
   const rootStyles = getComputedStyle(document.documentElement);
   const bodyStyles = getComputedStyle(document.body);
-  const theme = {
-    colorPrincipal: rootStyles.getPropertyValue("--color-principal").trim(),
-    colorSecundario: rootStyles.getPropertyValue("--color-secundario").trim(),
-    colorTexto: rootStyles.getPropertyValue("--color-texto").trim(),
-    colorFondo: rootStyles.getPropertyValue("--color-fondo").trim(),
-    colorGris: rootStyles.getPropertyValue("--color-gris").trim(),
-    colorDestacado: rootStyles.getPropertyValue("--color-destacado").trim(),
-    radius: rootStyles.getPropertyValue("--radius").trim(),
-    glassBg: rootStyles.getPropertyValue("--glass-bg").trim(),
-    glassBlur: rootStyles.getPropertyValue("--glass-blur").trim(),
-    modalBg: rootStyles.getPropertyValue("--modal-bg").trim(),
+  const leerVar = (name, fallback = "") =>
+    (bodyStyles.getPropertyValue(name) || rootStyles.getPropertyValue(name) || fallback).trim();
+  return {
+    colorPrincipal: leerVar("--color-principal", "#4c8b6e"),
+    colorSecundario: leerVar("--color-secundario", "#7f9c8a"),
+    colorTexto: leerVar("--color-texto", "#222222"),
+    colorFondo: leerVar("--color-fondo", "#f5f7f6"),
+    colorGris: leerVar("--color-gris", "#555555"),
+    colorDestacado: leerVar("--color-destacado", "#e2f0ea"),
+    radius: leerVar("--radius", "20px"),
     fontFamily: bodyStyles.fontFamily,
     fontSize: rootStyles.fontSize,
     darkMode: document.body.classList.contains("dark-mode")
   };
-
-  generadorFrame.contentWindow.postMessage({ type: "ABOGAPP_THEME_SYNC", theme }, window.location.origin);
 }
 
-function iniciarSincronizacionTemaGenerador() {
-  const generadorFrame = document.getElementById("generadorFrame");
-  if (!generadorFrame) return;
+function sincronizarTemaGeneradorNativo() {
+  const mount = document.getElementById("generadorMount");
+  if (!mount) return;
+  const tema = obtenerTemaActualApp();
+  mount.style.setProperty("--app-color-principal", tema.colorPrincipal || "#4c8b6e");
+  mount.style.setProperty("--app-color-secundario", tema.colorSecundario || "#7f9c8a");
+  mount.style.setProperty("--app-color-texto", tema.colorTexto || "#222222");
+  mount.style.setProperty("--app-color-fondo", tema.colorFondo || "#f5f7f6");
+  mount.style.setProperty("--app-color-gris", tema.colorGris || "#555555");
+  mount.style.setProperty("--app-color-destacado", tema.colorDestacado || "#e2f0ea");
+  mount.style.setProperty("--app-radius", tema.radius || "20px");
+  mount.style.fontFamily = tema.fontFamily || "";
+  mount.style.fontSize = tema.fontSize || "";
+  mount.classList.toggle("dark-mode", !!tema.darkMode);
+}
 
-  generadorFrame.addEventListener("load", () => {
-    enviarTemaAGenerador();
-  });
+function iniciarSincronizacionTemaGeneradorNativo() {
+  if (generadorTemaObservadorIniciado) return;
+  generadorTemaObservadorIniciado = true;
+  sincronizarTemaGeneradorNativo();
 
   const observer = new MutationObserver(() => {
-    enviarTemaAGenerador();
+    sincronizarTemaGeneradorNativo();
   });
-
   observer.observe(document.body, { attributes: true, attributeFilter: ["class", "style"] });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
-  window.addEventListener("resize", enviarTemaAGenerador);
+  window.addEventListener("resize", sincronizarTemaGeneradorNativo);
+}
+
+async function montarGeneradorNativo() {
+  const mount = document.getElementById("generadorMount");
+  if (!mount || generadorNativoMontado || generadorNativoMontando) return;
+  generadorNativoMontando = true;
+  mount.innerHTML = "<p style='padding:16px;color:var(--color-gris,#555)'>Cargando generador...</p>";
+
+  try {
+    const response = await fetch("generador/Generador_Escritos.html", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const html = await response.text();
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const estilos = parsed.querySelector("style");
+    const scripts = Array.from(parsed.querySelectorAll("script"));
+    const cuerpo = parsed.body ? parsed.body.innerHTML : "";
+
+    mount.innerHTML = "";
+    if (estilos) {
+      const scopedStyle = document.createElement("style");
+      scopedStyle.textContent = estilos.textContent
+        .replace(/(^|,)\s*:root(?=\s*[{,])/gm, "$1 #generadorMount")
+        .replace(/(^|,)\s*html(?=[\s.#:\[])/gm, "$1 #generadorMount")
+        .replace(/(^|,)\s*body(?=[\s.#:\[])/gm, "$1 #generadorMount");
+      mount.appendChild(scopedStyle);
+    }
+
+    const contenido = document.createElement("div");
+    contenido.className = "generador-native-content";
+    contenido.innerHTML = cuerpo;
+    contenido.querySelectorAll("script").forEach((el) => el.remove());
+    mount.appendChild(contenido);
+
+    scripts.forEach((scriptOriginal) => {
+      const script = document.createElement("script");
+      if (scriptOriginal.src) {
+        script.src = new URL(scriptOriginal.getAttribute("src"), "generador/Generador_Escritos.html").toString();
+      } else {
+        script.textContent = scriptOriginal.textContent || "";
+      }
+      mount.appendChild(script);
+    });
+
+    generadorNativoMontado = true;
+    sincronizarTemaGeneradorNativo();
+  } catch (error) {
+    console.error("No fue posible montar el generador nativo:", error);
+    mount.innerHTML = "<p style='padding:16px;color:#b42318'>No fue posible cargar el generador. Revisa que exista generador/Generador_Escritos.html.</p>";
+  } finally {
+    generadorNativoMontando = false;
+  }
 }
 
 // -----------------------------------------------------------------------------------
@@ -971,7 +1073,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const hoyExportSemanal = document.getElementById("hoyExportSemanal");
   const sidebar = document.querySelector(".sidebar");
   const toggleSidebarBtn = document.getElementById("toggleSidebar");
-  iniciarSincronizacionTemaGenerador();
+  iniciarSincronizacionTemaGeneradorNativo();
   window.updateSyncStatus = (state = "syncing", text = "") => {
     if (!syncStatus) return;
     syncStatus.classList.remove("ok", "syncing", "error");
@@ -1047,7 +1149,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (const t of criticas) {
       await window.supabaseSync.pullTabla?.(t);
     }
-    setTimeout(() => window.supabaseSync.pullAll(), 300);
+    setTimeout(() => {
+      window.supabaseSync.pullAll().then(() => {
+        if (typeof window.refrescarDatos === "function") {
+          window.refrescarDatos([
+            "clientes",
+            "tareasDia",
+            "audiencias",
+            "dashboard",
+            "hoy",
+            "notificaciones",
+            "internas",
+          ]);
+        }
+        if (typeof cargarTareasInternas === "function") {
+          cargarTareasInternas();
+          cargarTareasInternasArchivadas();
+        }
+      });
+    }, 300);
     window.supabaseSync.subscribeRealtime();
     window.updateSyncStatus("ok");
   }
@@ -1055,6 +1175,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (quickPanelCerrar && quickPanel) {
     quickPanelCerrar.addEventListener("click", () => quickPanel.classList.add("oculto"));
   }
+  if (quickPanel) {
+    document.addEventListener("click", (event) => {
+      if (quickPanel.classList.contains("oculto")) return;
+      const justoAbierto = Date.now() - (window.__quickPanelJustOpenedAt || 0) < 180;
+      if (justoAbierto) return;
+      if (quickPanel.contains(event.target)) return;
+      quickPanel.classList.add("oculto");
+    });
+    window.addEventListener("resize", () => {
+      if (quickPanel.classList.contains("oculto")) return;
+      const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
+      quickPanel.style.top = `${scrollActual}px`;
+      quickPanel.style.height = `${window.innerHeight}px`;
+    });
+  }
+
+  const observerModales = new MutationObserver(() => {
+    ajustarPosicionModalesVisibles();
+  });
+  observerModales.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"] });
+  window.addEventListener("resize", ajustarPosicionModalesVisibles);
 
   if (busquedaGlobalInput && busquedaGlobalResultados) {
     let idxSeleccionado = -1;
@@ -1311,32 +1452,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  const generadorFrame = document.getElementById("generadorFrame");
-  function ajustarAlturaGeneradorFrame(altura) {
-    if (!generadorFrame) return;
-    const alturaMinima = window.innerHeight ? Math.max(window.innerHeight - 240, 900) : 900;
-    const alturaFinal = Math.max(Number(altura) || 0, alturaMinima);
-    generadorFrame.style.height = `${alturaFinal}px`;
-  }
-
-  if (generadorFrame) {
-    generadorFrame.addEventListener("load", () => {
-      try {
-        const doc = generadorFrame.contentDocument || generadorFrame.contentWindow?.document;
-        if (!doc) return;
-        ajustarAlturaGeneradorFrame(doc.documentElement.scrollHeight || doc.body.scrollHeight);
-      } catch (error) {
-        console.warn("No fue posible ajustar la altura del Generador:", error);
-      }
-    });
-
-    window.addEventListener("message", (event) => {
-      if (event.data?.type === "generador-height") {
-        ajustarAlturaGeneradorFrame(event.data.height);
-      }
-    });
-  }
-
   const botonTema = document.getElementById("toggleTema");
   if (botonTema) {
     const mediaPref = window.matchMedia("(prefers-color-scheme: dark)");
@@ -1495,6 +1610,110 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (guardarConfig) {
       guardarConfig.addEventListener("click", () => {
         modalConfig.classList.add("oculto");
+      });
+    }
+  }
+
+  const btnChatIA = document.getElementById("chatIABubble") || document.getElementById("abrirChatIA");
+  const modalChatIA = document.getElementById("modalChatIA");
+  if (btnChatIA && modalChatIA) {
+    const cerrarChatIA = document.getElementById("cerrarModalChatIA");
+    const enviarChatIA = document.getElementById("chatIAEnviar");
+    const limpiarChatIA = document.getElementById("chatIALimpiar");
+    const inputPrompt = document.getElementById("chatIAPrompt");
+    const inputPreset = document.getElementById("chatIAPreset");
+    const output = document.getElementById("chatIARespuesta");
+    const estado = document.getElementById("chatIAEstado");
+
+    const setEstadoChat = (texto, esError = false) => {
+      if (!estado) return;
+      estado.textContent = texto;
+      estado.classList.remove("oculto");
+      estado.style.borderColor = esError ? "rgba(239,68,68,.45)" : "";
+      estado.style.background = esError ? "rgba(239,68,68,.12)" : "";
+    };
+
+    const limpiarEstadoChat = () => {
+      if (!estado) return;
+      estado.classList.add("oculto");
+      estado.textContent = "";
+      estado.style.borderColor = "";
+      estado.style.background = "";
+    };
+
+    btnChatIA.addEventListener("click", () => {
+      mostrarModal(modalChatIA);
+      setTimeout(() => inputPrompt?.focus(), 20);
+    });
+    if (cerrarChatIA) cerrarChatIA.addEventListener("click", () => modalChatIA.classList.add("oculto"));
+    modalChatIA.addEventListener("click", (e) => {
+      if (e.target === modalChatIA) modalChatIA.classList.add("oculto");
+    });
+
+    if (limpiarChatIA) {
+      limpiarChatIA.addEventListener("click", () => {
+        if (inputPrompt) inputPrompt.value = "";
+        if (output) output.value = "";
+        limpiarEstadoChat();
+        inputPrompt?.focus();
+      });
+    }
+
+    if (inputPrompt) {
+      inputPrompt.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          enviarChatIA?.click();
+        }
+      });
+    }
+
+    if (enviarChatIA) {
+      enviarChatIA.addEventListener("click", async () => {
+        const mensaje = (inputPrompt?.value || "").trim();
+        if (!mensaje) {
+          setEstadoChat("Debes escribir una consulta para usar el asistente.", true);
+          return;
+        }
+        if (!window.supabaseSync || typeof supabaseSync.chatIA !== "function") {
+          setEstadoChat("El backend de IA no está disponible en esta instalación.", true);
+          return;
+        }
+
+        const usuario = JSON.parse(localStorage.getItem("usuarioActual") || "null");
+        const contexto = {
+          vistaActual: vistaActual || "",
+          usuario: usuario?.nombre || usuario?.usuario || "",
+        };
+
+        try {
+          enviarChatIA.disabled = true;
+          setEstadoChat("Consultando asistente IA...");
+          const respuesta = await supabaseSync.chatIA({
+            mensaje,
+            preset: inputPreset?.value || "formal_juridico",
+            contexto,
+          });
+          const texto = String(
+            respuesta?.respuesta ||
+            respuesta?.output_text ||
+            respuesta?.text ||
+            ""
+          ).trim();
+          if (output) output.value = texto;
+          if (!texto) {
+            const pista = respuesta && Object.keys(respuesta).length
+              ? `Payload recibido sin texto: ${JSON.stringify(respuesta).slice(0, 220)}`
+              : "No se recibió contenido de respuesta.";
+            setEstadoChat(`La IA respondió sin texto visible. ${pista}`, true);
+            return;
+          }
+          setEstadoChat("Respuesta generada correctamente.");
+        } catch (error) {
+          setEstadoChat(error?.message || "No fue posible obtener respuesta de IA.", true);
+        } finally {
+          enviarChatIA.disabled = false;
+        }
       });
     }
   }

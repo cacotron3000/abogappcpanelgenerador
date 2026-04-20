@@ -302,6 +302,23 @@ button.btn.small { padding: 5px 9px; font-size: 12px; }
   width: min(640px, 94vw); max-height: 86vh; overflow: auto;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
 }
+.modal.sync-modal {
+  width: min(760px, 96vw);
+  max-height: 90vh;
+  border: 1px solid var(--border);
+  background: var(--panel);
+}
+.modal.sync-modal h3 {
+  margin-bottom: 14px;
+}
+#syncDetail {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--panel-soft);
+  color: var(--muted);
+}
 .modal h3 { margin: 0 0 10px 0; font-size: 16px; }
 .modal .close { float: right; background: transparent; border: none; cursor: pointer; font-size: 18px; color: var(--muted); }
 .lib-item {
@@ -377,17 +394,24 @@ body.dark-mode select,
 body.dark-mode .topbar,
 body.dark-mode .panel,
 body.dark-mode .modal,
-body.dark-mode .page,
 body.dark-mode .lib-item,
 body.dark-mode .person,
 body.dark-mode .otrosi-card {
   background: var(--panel-soft);
   color: var(--ink);
 }
+/* La vista previa del escrito se mantiene en modo claro para legibilidad de impresión. */
+body.dark-mode .page {
+  background: #ffffff;
+  color: #111111;
+  border-color: #d1d5db;
+}
 body.dark-mode .page p,
 body.dark-mode .page .bold,
 body.dark-mode .page .otrosi-title,
-body.dark-mode .page .uline { color: var(--ink); }
+body.dark-mode .page .uline {
+  color: #111111;
+}
 body.dark-mode .generador-hero {
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, transparent), rgba(17,24,39,0.94));
 }
@@ -560,7 +584,7 @@ body.dark-mode.embedded .lib-item {
 
 <!-- Modal: Configuración de sincronización -->
 <div class="modal-backdrop" id="syncModalBackdrop">
-  <div class="modal">
+  <div class="modal sync-modal">
     <button class="close" id="syncModalClose" title="Cerrar">×</button>
     <h3>Sincronización con servidor</h3>
     <p style="color: var(--muted); font-size: 13px; margin-top: 0;">

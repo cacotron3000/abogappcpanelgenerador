@@ -3,7 +3,7 @@
 /* Pensado para uso mobile-first y accesibilidad clara */
 
 /* === Modal personalizado === */
-.modal {
+body > .modal {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -22,7 +22,7 @@
 
 
 /* Resto del estilo del modal */
-.modal-contenido {
+body > .modal > .modal-contenido {
   background: var(--modal-bg);
   opacity: var(--modal-opacity);
   padding: 2rem;
@@ -40,7 +40,7 @@
 }
 
 /* Cerrar el modal */
-.modal-cerrar {
+body > .modal > .modal-contenido .modal-cerrar {
   position: absolute;
   top: 0.5rem;
   right: 1rem;
@@ -50,7 +50,7 @@
 }
 
 /* Botón cerrar modal */
-.modal-cerrar {
+body > .modal > .modal-contenido .modal-cerrar {
   float: right;
   font-size: 24px;
   cursor: pointer;
@@ -58,15 +58,15 @@
   transition: opacity 0.5s ease-in-out;
 }
 
-.modal-cerrar:hover {
+body > .modal > .modal-contenido .modal-cerrar:hover {
   color: #000;
 }
 
-#modalDetalleTareaDia .modal-contenido {
+#modalDetalleTareaDia > .modal-contenido {
   line-height: 1.5;
 }
 
-#modalDetalleTareaDia .modal-contenido h3,
-#modalDetalleTareaDia .modal-contenido p {
+#modalDetalleTareaDia > .modal-contenido h3,
+#modalDetalleTareaDia > .modal-contenido p {
   margin-bottom: 0.75rem;
 }

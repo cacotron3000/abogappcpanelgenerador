@@ -207,6 +207,21 @@ body.dark-mode .tarea-dia-card {
   backdrop-filter: blur(10px);
 }
 
+/* Tareas internas en tarjeta blanca (consistente con módulo de tareas). */
+body:not(.dark-mode) #tareasInternasLista .tarea-dia-card,
+body:not(.dark-mode) #tareasInternasArchivadas .tarea-dia-card {
+  background: #ffffff;
+  border: 1px solid #dde3ea;
+}
+body:not(.dark-mode) #tareasInternasLista .tarea-dia-card.tarea-dia-baja,
+body:not(.dark-mode) #tareasInternasLista .tarea-dia-card.tarea-dia-media,
+body:not(.dark-mode) #tareasInternasLista .tarea-dia-card.tarea-dia-alta,
+body:not(.dark-mode) #tareasInternasArchivadas .tarea-dia-card.tarea-dia-baja,
+body:not(.dark-mode) #tareasInternasArchivadas .tarea-dia-card.tarea-dia-media,
+body:not(.dark-mode) #tareasInternasArchivadas .tarea-dia-card.tarea-dia-alta {
+  background: #ffffff;
+}
+
 .tarea-dia-textos {
   flex: 1;
   display: flex;
@@ -277,4 +292,3 @@ body.dark-mode .tarea-dia-card {
     display: block;
   }
 }
-

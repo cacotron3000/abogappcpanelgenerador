@@ -3,7 +3,8 @@
 /* Pensado para uso mobile-first y accesibilidad clara */
 
 /* === Modal personalizado === */
-.modal {
+body > .modal,
+#app > .modal {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -12,7 +13,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 5vh;
+  padding: clamp(8px, 2vh, 24px) clamp(8px, 2vw, 24px);
+  overflow: auto;
   z-index: 12000;
   /* Suave desenfoque del fondo */
   backdrop-filter: blur(var(--modal-blur));
@@ -21,13 +23,14 @@
 
 
 /* Resto del estilo del modal */
-.modal-contenido {
+body > .modal > .modal-contenido,
+#app > .modal > .modal-contenido {
   background: var(--modal-bg);
   opacity: var(--modal-opacity);
   padding: 2rem;
   border-radius: var(--radius);
   max-width: 1000px;
-  max-height: 95%;
+  max-height: min(92vh, 1000px);
   overflow-y: auto; /* Permite desplazamiento si el contenido es demasiado grande */
   width: 95%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -39,7 +42,8 @@
 }
 
 /* Cerrar el modal */
-.modal-cerrar {
+body > .modal > .modal-contenido .modal-cerrar,
+#app > .modal > .modal-contenido .modal-cerrar {
   position: absolute;
   top: 0.5rem;
   right: 1rem;
@@ -49,7 +53,8 @@
 }
 
 /* Botón cerrar modal */
-.modal-cerrar {
+body > .modal > .modal-contenido .modal-cerrar,
+#app > .modal > .modal-contenido .modal-cerrar {
   float: right;
   font-size: 24px;
   cursor: pointer;
@@ -57,15 +62,16 @@
   transition: opacity 0.5s ease-in-out;
 }
 
-.modal-cerrar:hover {
+body > .modal > .modal-contenido .modal-cerrar:hover,
+#app > .modal > .modal-contenido .modal-cerrar:hover {
   color: #000;
 }
 
-#modalDetalleTareaDia .modal-contenido {
+#modalDetalleTareaDia > .modal-contenido {
   line-height: 1.5;
 }
 
-#modalDetalleTareaDia .modal-contenido h3,
-#modalDetalleTareaDia .modal-contenido p {
+#modalDetalleTareaDia > .modal-contenido h3,
+#modalDetalleTareaDia > .modal-contenido p {
   margin-bottom: 0.75rem;
 }

@@ -1614,7 +1614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  const btnChatIA = document.getElementById("abrirChatIA");
+  const btnChatIA = document.getElementById("chatIABubble") || document.getElementById("abrirChatIA");
   const modalChatIA = document.getElementById("modalChatIA");
   if (btnChatIA && modalChatIA) {
     const cerrarChatIA = document.getElementById("cerrarModalChatIA");

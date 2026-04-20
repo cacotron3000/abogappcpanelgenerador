@@ -2057,6 +2057,34 @@ body.dark-mode .generador-card {
   max-width: 920px;
 }
 
+.chat-ia-bubble {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 12500;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+  cursor: pointer;
+}
+
+.chat-ia-bubble:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.42);
+}
+
+body.dark-mode .chat-ia-bubble {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.65);
+}
+
 .chat-ia-help {
   color: var(--text-muted, #64748b);
   margin-top: 0;

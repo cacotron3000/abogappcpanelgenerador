@@ -825,11 +825,10 @@ function actualizarKpiResumen() {
 let modalZIndex = 12000;
 function ajustarPosicionModalesVisibles() {
   const abiertos = document.querySelectorAll("#app > .modal:not(.oculto), body > .modal:not(.oculto)");
-  const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
   abiertos.forEach((modal) => {
-    modal.style.position = "absolute";
-    modal.style.top = `${scrollActual}px`;
-    modal.style.minHeight = `${window.innerHeight}px`;
+    modal.style.position = "fixed";
+    modal.style.inset = "0";
+    modal.style.minHeight = "100vh";
     modal.style.left = "0";
     modal.style.right = "0";
   });
@@ -1196,7 +1195,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     ajustarPosicionModalesVisibles();
   });
   observerModales.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"] });
-  window.addEventListener("scroll", ajustarPosicionModalesVisibles, { passive: true });
   window.addEventListener("resize", ajustarPosicionModalesVisibles);
 
   if (busquedaGlobalInput && busquedaGlobalResultados) {

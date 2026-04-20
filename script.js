@@ -879,11 +879,7 @@ function cambiarVista(vistaId) {
   } else if (vistaId === "hoy") {
     renderVistaHoy();
   } else if (vistaId === "generador") {
-    const generadorFrame = document.getElementById("generadorFrame");
-    if (generadorFrame && !generadorFrame.src) {
-      generadorFrame.src = "generador/Generador_Escritos.html";
-    }
-    setTimeout(enviarTemaAGenerador, 60);
+    montarGeneradorNativo();
   }
 
   // 2) Ocultamos todas las secciones
@@ -899,47 +895,58 @@ function cambiarVista(vistaId) {
   if (botonActivo) botonActivo.classList.add("active");
 }
 
+let generadorNativoMontado = false;
+let generadorNativoMontando = false;
 
-function enviarTemaAGenerador() {
-  const generadorFrame = document.getElementById("generadorFrame");
-  if (!generadorFrame || !generadorFrame.contentWindow) return;
+async function montarGeneradorNativo() {
+  const mount = document.getElementById("generadorMount");
+  if (!mount || generadorNativoMontado || generadorNativoMontando) return;
+  generadorNativoMontando = true;
+  mount.innerHTML = "<p style='padding:16px;color:var(--color-gris,#555)'>Cargando generador...</p>";
 
-  const rootStyles = getComputedStyle(document.documentElement);
-  const bodyStyles = getComputedStyle(document.body);
-  const theme = {
-    colorPrincipal: rootStyles.getPropertyValue("--color-principal").trim(),
-    colorSecundario: rootStyles.getPropertyValue("--color-secundario").trim(),
-    colorTexto: rootStyles.getPropertyValue("--color-texto").trim(),
-    colorFondo: rootStyles.getPropertyValue("--color-fondo").trim(),
-    colorGris: rootStyles.getPropertyValue("--color-gris").trim(),
-    colorDestacado: rootStyles.getPropertyValue("--color-destacado").trim(),
-    radius: rootStyles.getPropertyValue("--radius").trim(),
-    glassBg: rootStyles.getPropertyValue("--glass-bg").trim(),
-    glassBlur: rootStyles.getPropertyValue("--glass-blur").trim(),
-    modalBg: rootStyles.getPropertyValue("--modal-bg").trim(),
-    fontFamily: bodyStyles.fontFamily,
-    fontSize: rootStyles.fontSize,
-    darkMode: document.body.classList.contains("dark-mode")
-  };
+  try {
+    const response = await fetch("generador/Generador_Escritos.html", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-  generadorFrame.contentWindow.postMessage({ type: "ABOGAPP_THEME_SYNC", theme }, window.location.origin);
-}
+    const html = await response.text();
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const estilos = parsed.querySelector("style");
+    const scripts = Array.from(parsed.querySelectorAll("script"));
+    const cuerpo = parsed.body ? parsed.body.innerHTML : "";
 
-function iniciarSincronizacionTemaGenerador() {
-  const generadorFrame = document.getElementById("generadorFrame");
-  if (!generadorFrame) return;
+    mount.innerHTML = "";
+    if (estilos) {
+      const scopedStyle = document.createElement("style");
+      scopedStyle.textContent = estilos.textContent
+        .replace(/(^|,)\s*html(?=\s*[{,])/gm, "$1 #generadorMount")
+        .replace(/(^|,)\s*body(?=\s*[{,])/gm, "$1 #generadorMount")
+        .replace(/(^|,)\s*:root(?=\s*[{,])/gm, "$1 #generadorMount");
+      mount.appendChild(scopedStyle);
+    }
 
-  generadorFrame.addEventListener("load", () => {
-    enviarTemaAGenerador();
-  });
+    const contenido = document.createElement("div");
+    contenido.className = "generador-native-content";
+    contenido.innerHTML = cuerpo;
+    contenido.querySelectorAll("script").forEach((el) => el.remove());
+    mount.appendChild(contenido);
 
-  const observer = new MutationObserver(() => {
-    enviarTemaAGenerador();
-  });
+    scripts.forEach((scriptOriginal) => {
+      const script = document.createElement("script");
+      if (scriptOriginal.src) {
+        script.src = new URL(scriptOriginal.getAttribute("src"), "generador/Generador_Escritos.html").toString();
+      } else {
+        script.textContent = scriptOriginal.textContent || "";
+      }
+      mount.appendChild(script);
+    });
 
-  observer.observe(document.body, { attributes: true, attributeFilter: ["class", "style"] });
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style"] });
-  window.addEventListener("resize", enviarTemaAGenerador);
+    generadorNativoMontado = true;
+  } catch (error) {
+    console.error("No fue posible montar el generador nativo:", error);
+    mount.innerHTML = "<p style='padding:16px;color:#b42318'>No fue posible cargar el generador. Revisa que exista generador/Generador_Escritos.html.</p>";
+  } finally {
+    generadorNativoMontando = false;
+  }
 }
 
 // -----------------------------------------------------------------------------------
@@ -971,7 +978,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const hoyExportSemanal = document.getElementById("hoyExportSemanal");
   const sidebar = document.querySelector(".sidebar");
   const toggleSidebarBtn = document.getElementById("toggleSidebar");
-  iniciarSincronizacionTemaGenerador();
   window.updateSyncStatus = (state = "syncing", text = "") => {
     if (!syncStatus) return;
     syncStatus.classList.remove("ok", "syncing", "error");
@@ -1308,32 +1314,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     abrirGeneradorDashboard.addEventListener("click", () => {
       localStorage.setItem("ultimaVista", "generador");
       cambiarVista("generador");
-    });
-  }
-
-  const generadorFrame = document.getElementById("generadorFrame");
-  function ajustarAlturaGeneradorFrame(altura) {
-    if (!generadorFrame) return;
-    const alturaMinima = window.innerHeight ? Math.max(window.innerHeight - 240, 900) : 900;
-    const alturaFinal = Math.max(Number(altura) || 0, alturaMinima);
-    generadorFrame.style.height = `${alturaFinal}px`;
-  }
-
-  if (generadorFrame) {
-    generadorFrame.addEventListener("load", () => {
-      try {
-        const doc = generadorFrame.contentDocument || generadorFrame.contentWindow?.document;
-        if (!doc) return;
-        ajustarAlturaGeneradorFrame(doc.documentElement.scrollHeight || doc.body.scrollHeight);
-      } catch (error) {
-        console.warn("No fue posible ajustar la altura del Generador:", error);
-      }
-    });
-
-    window.addEventListener("message", (event) => {
-      if (event.data?.type === "generador-height") {
-        ajustarAlturaGeneradorFrame(event.data.height);
-      }
     });
   }
 

@@ -2531,7 +2531,10 @@ function notifyParentHeight() {
 }
 
 // =============== INIT ===============
+let generadorInicializado = false;
 function init() {
+  if (generadorInicializado) return;
+  generadorInicializado = true;
   syncEmbeddedTheme();
   if (!localStorage.getItem(LS.syncConfig)) {
     Sync.setConfig(Sync.getConfig());
@@ -2564,7 +2567,12 @@ function init() {
                   .catch(err => { console.warn("Sync inicial falló:", err); renderSyncChip(); });
   }
 }
-document.addEventListener("DOMContentLoaded", init);
+window.GENERADOR_ESCRITOS_INIT = init;
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
 
 </script>
 </body>

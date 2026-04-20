@@ -1,0 +1,159 @@
+openapi: 3.0.3
+info:
+  title: Generator Internal API
+  version: 1.0.0
+  description: API interna del servicio de generador para la integración en misma app (opción C).
+servers:
+  - url: http://generator-service:8080
+paths:
+  /v1/templates:
+    get:
+      summary: Listar plantillas disponibles
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plantillas disponibles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Template'
+  /v1/documents:
+    post:
+      summary: Crear borrador de documento
+      parameters:
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDocumentRequest'
+      responses:
+        '201':
+          description: Documento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+  /v1/documents/{documentId}:
+    get:
+      summary: Obtener documento
+      parameters:
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Documento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+        '404':
+          description: No encontrado
+  /v1/documents/{documentId}/render:
+    post:
+      summary: Renderizar documento final
+      parameters:
+        - in: path
+          name: documentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: x-correlation-id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Documento renderizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documentId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [rendered]
+                  downloadUrl:
+                    type: string
+                    format: uri
+components:
+  schemas:
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+    CreateDocumentRequest:
+      type: object
+      required: [tenantId, createdByUserId, templateId, payload]
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        createdByUserId:
+          type: string
+          format: uuid
+        templateId:
+          type: string
+          format: uuid
+        payload:
+          type: object
+          additionalProperties: true
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        createdByUserId:
+          type: string
+          format: uuid
+        templateId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, rendered, failed]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

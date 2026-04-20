@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  app-db:
+    image: postgres:16
+    container_name: app-db
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_pass
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+
+  generator-db:
+    image: postgres:16
+    container_name: generator-db
+    environment:
+      POSTGRES_USER: generator_rw
+      POSTGRES_PASSWORD: generator_pass
+      POSTGRES_DB: generator_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - generator_db_data:/var/lib/postgresql/data
+      - ./sql/generator_init.sql:/docker-entrypoint-initdb.d/001_generator_init.sql:ro
+
+volumes:
+  app_db_data:
+  generator_db_data:

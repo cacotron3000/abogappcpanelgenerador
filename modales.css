@@ -10,9 +10,10 @@
   height: 100%;
   background-color: var(--modal-fondo);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 5vh;
+  padding: clamp(8px, 2vh, 24px);
+  overflow: auto;
   z-index: 12000;
   /* Suave desenfoque del fondo */
   backdrop-filter: blur(var(--modal-blur));
@@ -27,7 +28,7 @@
   padding: 2rem;
   border-radius: var(--radius);
   max-width: 1000px;
-  max-height: 95%;
+  max-height: min(92vh, 1000px);
   overflow-y: auto; /* Permite desplazamiento si el contenido es demasiado grande */
   width: 95%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);

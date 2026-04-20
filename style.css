@@ -59,6 +59,10 @@ h1, h2, h3 {
   flex-direction: column;
   width: 220px;
   background-color: var(--color-principal);
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
 }
@@ -131,6 +135,10 @@ h1, h2, h3 {
   .sidebar {
     width: 100%;
     flex-direction: row;
+    position: sticky;
+    top: 0;
+    height: auto;
+    align-self: stretch;
     overflow-x: auto;
   }
 
@@ -1918,6 +1926,8 @@ body.dark-mode #quickPanel {
   .sidebar {
     position: sticky;
     top: 0;
+    height: auto;
+    align-self: stretch;
     z-index: 12000;
     white-space: nowrap;
     scroll-snap-type: x mandatory;

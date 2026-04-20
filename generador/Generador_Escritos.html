@@ -51,7 +51,7 @@ body.embedded {
   margin: 0 auto;
 }
 .generador-hero {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, white), rgba(255,255,255,0.96));
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-soft);
@@ -74,7 +74,7 @@ body.embedded {
   margin-bottom: 10px;
 }
 h1 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: inherit;
   font-size: 31px;
   line-height: 1.15;
   margin: 0 0 8px 0;
@@ -149,6 +149,7 @@ h1 {
   backdrop-filter: blur(8px);
 }
 .panel h2 {
+  font-family: inherit;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -264,7 +265,7 @@ button.btn.small { padding: 5px 9px; font-size: 12px; }
 
 /* Preview */
 .page {
-  background: var(--panel-soft);
+  background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 56px 64px;
@@ -319,7 +320,7 @@ button.btn.small { padding: 5px 9px; font-size: 12px; }
   background: var(--panel-soft);
   color: var(--muted);
 }
-.modal h3 { margin: 0 0 10px 0; font-size: 16px; }
+.modal h3 { margin: 0 0 10px 0; font-size: 16px; font-family: inherit; }
 .modal .close { float: right; background: transparent; border: none; cursor: pointer; font-size: 18px; color: var(--muted); }
 .lib-item {
   border: 1px solid var(--border); border-radius: 10px;
@@ -413,7 +414,7 @@ body.dark-mode .page .uline {
   color: #111111;
 }
 body.dark-mode .generador-hero {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 28%, transparent), rgba(17,24,39,0.94));
+  background: var(--panel);
 }
 body.dark-mode .add-btn,
 body.dark-mode button.btn { color: var(--ink); }

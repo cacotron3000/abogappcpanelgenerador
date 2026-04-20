@@ -823,11 +823,24 @@ function actualizarKpiResumen() {
 
 // Manejo de capas de modales para permitir abrir un modal sobre otro
 let modalZIndex = 12000;
+function ajustarPosicionModalesVisibles() {
+  const abiertos = document.querySelectorAll("#app > .modal:not(.oculto), body > .modal:not(.oculto)");
+  const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
+  abiertos.forEach((modal) => {
+    modal.style.position = "absolute";
+    modal.style.top = `${scrollActual}px`;
+    modal.style.minHeight = `${window.innerHeight}px`;
+    modal.style.left = "0";
+    modal.style.right = "0";
+  });
+}
+
 function mostrarModal(modal) {
   if (!modal) return;
   modalZIndex += 1;
   modal.style.zIndex = modalZIndex;
   modal.classList.remove("oculto");
+  ajustarPosicionModalesVisibles();
 }
 
 function mostrarAlertaModal(mensaje, driveLink) {
@@ -1178,6 +1191,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       quickPanel.style.height = `${window.innerHeight}px`;
     });
   }
+
+  const observerModales = new MutationObserver(() => {
+    ajustarPosicionModalesVisibles();
+  });
+  observerModales.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"] });
+  window.addEventListener("scroll", ajustarPosicionModalesVisibles, { passive: true });
+  window.addEventListener("resize", ajustarPosicionModalesVisibles);
 
   if (busquedaGlobalInput && busquedaGlobalResultados) {
     let idxSeleccionado = -1;

@@ -905,9 +905,6 @@ function cambiarVista(vistaId) {
     cargarTareasDiaArchivadas();
   } else if (vistaId === "audiencias" && typeof cargarAudiencias === "function") {
     cargarAudiencias();
-    if (typeof mostrarAudienciasProximas === "function") {
-      mostrarAudienciasProximas();
-    }
   } else if (vistaId === "hoy") {
     renderVistaHoy();
   } else if (vistaId === "generador") {

@@ -416,8 +416,29 @@ body.dark-mode .page .uline {
 body.dark-mode .generador-hero {
   background: var(--panel);
 }
-body.dark-mode .add-btn,
-body.dark-mode button.btn { color: var(--ink); }
+body.dark-mode .add-btn {
+  color: var(--ink);
+  background: var(--panel-soft);
+  border-color: var(--border);
+}
+body.dark-mode .add-btn:hover {
+  background: rgba(55, 65, 81, 0.9);
+}
+body.dark-mode button.btn {
+  color: var(--ink);
+  background: var(--panel-soft);
+  border-color: var(--border);
+}
+body.dark-mode button.btn.ghost {
+  background: transparent;
+}
+body.dark-mode button.btn:disabled,
+body.dark-mode .add-btn:disabled {
+  opacity: 0.45;
+  color: var(--muted);
+  background: rgba(71, 85, 105, 0.5);
+  border-color: var(--border);
+}
 
 body.embedded {
   background: transparent;

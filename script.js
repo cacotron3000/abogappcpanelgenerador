@@ -648,9 +648,38 @@ function abrirQuickPanel(titulo, contenidoHtml) {
   panel.classList.remove("oculto");
 }
 
+function normalizarTipoDetalle(tipo, data = {}) {
+  const bruto = String(tipo || "").toLowerCase().trim();
+  const mapa = {
+    tarea: "tarea",
+    tareas: "tarea",
+    gestion: "tarea",
+    gestiones: "tarea",
+    "tarea_dia": "tarea_dia",
+    "tareas_dia": "tarea_dia",
+    "tarea-interna": "tarea_interna",
+    "tarea_interna": "tarea_interna",
+    "tareas_internas": "tarea_interna",
+    interna: "tarea_interna",
+    cliente: "cliente",
+    clientes: "cliente",
+    audiencia: "audiencia",
+    audiencias: "audiencia"
+  };
+  if (mapa[bruto]) return mapa[bruto];
+
+  // Fallback por forma de datos, para no mostrar paneles cruzados.
+  if (data && (data.correo || data.telefono || data.rut)) return "cliente";
+  if (data && (data.modalidad || data.hora || data.notas)) return "audiencia";
+  if (data && (data.expedienteId || data.descripcion || data.estado)) return "tarea";
+  if (data && (data.asignadosA || data.proximaAccion || data.fechaFin)) return "tarea_interna";
+  return bruto;
+}
+
 function mostrarDetalleEntidad(tipo, data) {
   if (!data) return;
-  if (tipo === "tarea") {
+  const tipoNorm = normalizarTipoDetalle(tipo, data);
+  if (tipoNorm === "tarea") {
     abrirQuickPanel(
       `Detalle tarea: ${data.titulo || data.texto || "Sin título"}`,
       `<h4>Resumen</h4>
@@ -669,7 +698,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "tarea_dia") {
+  if (tipoNorm === "tarea_dia") {
     const clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
     const cliente = clientes.find((c) => c.id === data.clienteId);
     abrirQuickPanel(
@@ -687,7 +716,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "tarea_interna") {
+  if (tipoNorm === "tarea_interna") {
     const clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
     const cliente = clientes.find((c) => c.id === data.clienteId);
     abrirQuickPanel(
@@ -705,7 +734,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "cliente") {
+  if (tipoNorm === "cliente") {
     abrirQuickPanel(
       `Cliente: ${data.nombre || "Sin nombre"}`,
       `<h4>Resumen</h4><p><strong>Correo:</strong> ${data.correo || "-"}</p>
@@ -717,7 +746,7 @@ function mostrarDetalleEntidad(tipo, data) {
     );
     return;
   }
-  if (tipo === "audiencia") {
+  if (tipoNorm === "audiencia") {
     abrirQuickPanel(
       `Audiencia: ${data.titulo || "Sin título"}`,
       `<h4>Resumen</h4><p><strong>Tipo:</strong> ${data.tipo || "-"}</p>
@@ -726,7 +755,9 @@ function mostrarDetalleEntidad(tipo, data) {
        <p><strong>Notas:</strong> ${data.notas || "-"}</p>
        <button class="quickpanel-edit-btn" onclick="if (typeof editarAudiencia==='function'){document.getElementById('quickPanel')?.classList.add('oculto'); editarAudiencia(${data.id});}">✏️ Editar</button>`
     );
+    return;
   }
+  abrirQuickPanel(`Detalle: ${tipo || "registro"}`, `<pre>${JSON.stringify(data, null, 2)}</pre>`);
 }
 window.mostrarDetalleEntidad = mostrarDetalleEntidad;
 

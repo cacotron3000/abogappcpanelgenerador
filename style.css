@@ -59,6 +59,10 @@ h1, h2, h3 {
   flex-direction: column;
   width: 220px;
   background-color: var(--color-principal);
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
   overflow-y: auto;
   transition: width 0.3s ease;
 }
@@ -131,6 +135,10 @@ h1, h2, h3 {
   .sidebar {
     width: 100%;
     flex-direction: row;
+    position: sticky;
+    top: 0;
+    height: auto;
+    align-self: stretch;
     overflow-x: auto;
   }
 
@@ -1567,6 +1575,25 @@ body:not(.dark-mode) .audiencia-card.audiencia-amarilla {
 body:not(.dark-mode) .audiencia-card.audiencia-verde {
   background-color: #99fab8;
 }
+
+/* Audiencias en tarjeta blanca (consistente con vista de tareas) */
+body:not(.dark-mode) #audienciasLista .audiencia-card,
+body:not(.dark-mode) #audienciasArchivadas .audiencia-card,
+body:not(.dark-mode) #audienciasListaDashboard .audiencia-card {
+  background: #ffffff;
+  border: 1px solid #dde3ea;
+}
+body:not(.dark-mode) #audienciasLista .audiencia-card.audiencia-roja,
+body:not(.dark-mode) #audienciasLista .audiencia-card.audiencia-amarilla,
+body:not(.dark-mode) #audienciasLista .audiencia-card.audiencia-verde,
+body:not(.dark-mode) #audienciasArchivadas .audiencia-card.audiencia-roja,
+body:not(.dark-mode) #audienciasArchivadas .audiencia-card.audiencia-amarilla,
+body:not(.dark-mode) #audienciasArchivadas .audiencia-card.audiencia-verde,
+body:not(.dark-mode) #audienciasListaDashboard .audiencia-card.audiencia-roja,
+body:not(.dark-mode) #audienciasListaDashboard .audiencia-card.audiencia-amarilla,
+body:not(.dark-mode) #audienciasListaDashboard .audiencia-card.audiencia-verde {
+  background: #ffffff;
+}
 .header-busqueda-global { position: relative; margin-top: 6px; }
 #busquedaGlobalInput { min-width: 260px; padding: 8px 10px; border-radius: 8px; border: 1px solid #cfd8dc; }
 #busquedaGlobalResultados { position: absolute; top: 40px; left: 0; background: #fff; border: 1px solid #d9e1e6; border-radius: 8px; width: 100%; max-height: 260px; overflow: auto; z-index: 20000; }
@@ -1676,7 +1703,8 @@ body:not(.app-activa) .header-busqueda-global {
   background: #fff;
 }
 
-#busquedaGlobalInput {
+#busquedaGlobalInput,
+#buscarClientes {
   padding: 10px 44px 10px 34px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
@@ -1685,6 +1713,7 @@ body:not(.app-activa) .header-busqueda-global {
 }
 
 #busquedaGlobalInput:focus-visible,
+#buscarClientes:focus-visible,
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
@@ -1816,6 +1845,12 @@ body.dark-mode #busquedaGlobalInput {
   border-color: rgba(148, 163, 184, 0.35);
 }
 
+body.dark-mode #buscarClientes {
+  background: rgba(15, 23, 42, 0.8);
+  color: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
 body.dark-mode .search-shortcut {
   background: #0f172a;
   border-color: #475569;
@@ -1918,6 +1953,8 @@ body.dark-mode #quickPanel {
   .sidebar {
     position: sticky;
     top: 0;
+    height: auto;
+    align-self: stretch;
     z-index: 12000;
     white-space: nowrap;
     scroll-snap-type: x mandatory;
@@ -1986,26 +2023,62 @@ body.dark-mode #quickPanel {
   background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,246,0.98));
 }
 
+body.dark-mode .generador-card {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
+  border-color: rgba(148, 163, 184, 0.26);
+  box-shadow: 0 14px 32px rgba(2, 6, 23, 0.5);
+}
+
 .generador-descripcion {
   margin: 0 0 14px 0;
   color: var(--color-gris, #555555);
   line-height: 1.55;
 }
 
-.generador-iframe-wrap {
-  width: 100%;
-  min-height: calc(100vh - 240px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 22px;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,246,0.98));
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.08);
-}
-
-#generadorFrame {
+.generador-native-wrap {
   width: 100%;
   min-height: calc(100vh - 240px);
   border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.generador-native-mount {
+  width: 100%;
+  min-height: calc(100vh - 240px);
   display: block;
   background: transparent;
+}
+
+/* ===== CHAT IA ===== */
+.chat-ia-modal {
+  max-width: 920px;
+}
+
+.chat-ia-help {
+  color: var(--text-muted, #64748b);
+  margin-top: 0;
+}
+
+.chat-ia-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.chat-ia-status {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--text-primary, #0f172a);
+}
+
+body.dark-mode .chat-ia-status {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(148, 163, 184, 0.32);
+  color: #e2e8f0;
 }

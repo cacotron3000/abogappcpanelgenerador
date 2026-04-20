@@ -329,6 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectCliente = document.getElementById("tareaInternaCliente");
   const selectPrioridad = document.getElementById("tareaInternaPrioridad");
   const inputFechaFin = document.getElementById("tareaInternaFechaFin");
+  const inputProximaAccion = document.getElementById("tareaInternaProximaAccion");
   const toggleArch = document.getElementById("toggleTareasInternasArchivadas");
   const modalDetalle = document.getElementById("modalDetalleTareaInterna");
   const cerrarDetalle = document.getElementById("cerrarModalDetalleTareaInterna");

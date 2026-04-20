@@ -92,6 +92,7 @@
       <button data-tab="internas" class="tab"><i class="fa-sharp fa-solid fa-clipboard-check"></i><span> Tareas internas</span></button>
       <button data-tab="clientes" class="tab"><i class="fa-sharp fa-solid fa-user"></i><span> Clientes</span></button>
       <button data-tab="generador" class="tab"><i class="fa-sharp fa-solid fa-file-signature"></i><span> Generador</span></button>
+      <button id="abrirChatIA" class="tab"><i class="fa-sharp fa-solid fa-robot"></i><span> Asistente IA</span></button>
       <button id="tabUsuarios" data-tab="usuarios" class="tab oculto"><i class="fa-sharp fa-solid fa-users"></i><span> Usuarios</span></button>
       <button id="toggleTema" class="tab"><i class="fa-sharp fa-solid fa-moon"></i><span> Oscuro</span></button>
       <button id="abrirConfiguracion" class="tab"><i class="fa-sharp fa-solid fa-gear"></i><span> Configuración</span></button>
@@ -211,14 +212,8 @@
           <h1><i class="fa-sharp fa-solid fa-file-signature"></i> Generador de escritos</h1>
         </div>
         <div class="dashboard-card generador-card">
-                    <div class="generador-iframe-wrap">
-            <iframe
-              id="generadorFrame"
-              src="generador/Generador_Escritos.html"
-              title="Generador de escritos"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            ></iframe>
+          <div class="generador-native-wrap">
+            <div id="generadorMount" class="generador-native-mount"></div>
           </div>
         </div>
       </section>
@@ -229,9 +224,11 @@
           <h1><i class="fa-sharp fa-solid fa-clipboard-list"></i> Tareas internas (<span id="tareasInternasCantidad">0</span>)</h1>
           <button id="nuevaTareaInternaBtn" class="mini-boton" style="margin-left:auto;"><i class="fa-sharp fa-solid fa-plus"></i> Nueva tarea</button>
         </div>
-        <div id="tareasInternasLista"></div>
-        <button id="toggleTareasInternasArchivadas" class="boton"><i class="fa-sharp fa-solid fa-box-archive"></i> Tareas archivadas</button>
-        <div id="tareasInternasArchivadas" class="oculto"></div>
+        <div class="dashboard-card">
+          <div id="tareasInternasLista"></div>
+          <button id="toggleTareasInternasArchivadas" class="boton"><i class="fa-sharp fa-solid fa-box-archive"></i> Tareas archivadas</button>
+          <div id="tareasInternasArchivadas" class="oculto"></div>
+        </div>
       </section>
 
       <!-- SECCION AUDIENCIAS -->
@@ -240,9 +237,11 @@
           <h1><i class="fa-sharp fa-solid fa-gavel"></i> Audiencias</h1>
           <button id="nuevaAudienciaBtn" class="boton">+ Nueva audiencia</button>
         </div>
-        <div id="audienciasLista"></div>
-        <button id="toggleAudienciasArchivadas" class="boton">Mostrar audiencias archivadas</button>
-        <div id="audienciasArchivadas" class="oculto"></div>
+        <div class="dashboard-card">
+          <div id="audienciasLista"></div>
+          <button id="toggleAudienciasArchivadas" class="boton">Mostrar audiencias archivadas</button>
+          <div id="audienciasArchivadas" class="oculto"></div>
+        </div>
       </section>
 
         <!-- SECCION DE USUARIOS -->
@@ -855,6 +854,33 @@
       <option value="12">12 horas</option>
     </select>
     <button id="guardarConfiguracion" class="boton">Guardar</button>
+  </div>
+</div>
+
+<!-- Modal de asistente IA -->
+<div id="modalChatIA" class="modal oculto">
+  <div class="modal-contenido chat-ia-modal">
+    <span id="cerrarModalChatIA" class="modal-cerrar">×</span>
+    <h3><i class="fa-sharp fa-solid fa-robot"></i> Asistente IA</h3>
+    <p class="chat-ia-help">Escribe tu solicitud y elige un preset para controlar tono y formato.</p>
+
+    <label for="chatIAPreset">Preset de respuesta</label>
+    <select id="chatIAPreset">
+      <option value="formal_juridico">Formal jurídico</option>
+      <option value="resumen_ejecutivo">Resumen ejecutivo</option>
+      <option value="correo_cliente">Correo a cliente</option>
+    </select>
+
+    <label for="chatIAPrompt">Tu mensaje</label>
+    <textarea id="chatIAPrompt" rows="7" placeholder="Ej: Redacta un correo para informar reprogramación de audiencia..."></textarea>
+
+    <div class="chat-ia-actions">
+      <button id="chatIAEnviar" class="boton">Enviar</button>
+      <button id="chatIALimpiar" class="mini-boton" type="button">Limpiar</button>
+    </div>
+    <div id="chatIAEstado" class="chat-ia-status oculto"></div>
+    <label for="chatIARespuesta">Respuesta</label>
+    <textarea id="chatIARespuesta" rows="10" readonly placeholder="Aquí aparecerá la respuesta del asistente..."></textarea>
   </div>
 </div>
 

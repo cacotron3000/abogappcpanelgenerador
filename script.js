@@ -999,9 +999,9 @@ async function montarGeneradorNativo() {
     if (estilos) {
       const scopedStyle = document.createElement("style");
       scopedStyle.textContent = estilos.textContent
-        .replace(/(^|,)\s*html(?=\s*[{,])/gm, "$1 #generadorMount")
-        .replace(/(^|,)\s*body(?=\s*[{,])/gm, "$1 #generadorMount")
-        .replace(/(^|,)\s*:root(?=\s*[{,])/gm, "$1 #generadorMount");
+        .replace(/(^|,)\s*:root(?=\s*[{,])/gm, "$1 #generadorMount")
+        .replace(/(^|,)\s*html(?=[\s.#:\[])/gm, "$1 #generadorMount")
+        .replace(/(^|,)\s*body(?=[\s.#:\[])/gm, "$1 #generadorMount");
       mount.appendChild(scopedStyle);
     }
 

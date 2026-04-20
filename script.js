@@ -902,14 +902,16 @@ let generadorTemaObservadorIniciado = false;
 function obtenerTemaActualApp() {
   const rootStyles = getComputedStyle(document.documentElement);
   const bodyStyles = getComputedStyle(document.body);
+  const leerVar = (name, fallback = "") =>
+    (bodyStyles.getPropertyValue(name) || rootStyles.getPropertyValue(name) || fallback).trim();
   return {
-    colorPrincipal: rootStyles.getPropertyValue("--color-principal").trim(),
-    colorSecundario: rootStyles.getPropertyValue("--color-secundario").trim(),
-    colorTexto: rootStyles.getPropertyValue("--color-texto").trim(),
-    colorFondo: rootStyles.getPropertyValue("--color-fondo").trim(),
-    colorGris: rootStyles.getPropertyValue("--color-gris").trim(),
-    colorDestacado: rootStyles.getPropertyValue("--color-destacado").trim(),
-    radius: rootStyles.getPropertyValue("--radius").trim(),
+    colorPrincipal: leerVar("--color-principal", "#4c8b6e"),
+    colorSecundario: leerVar("--color-secundario", "#7f9c8a"),
+    colorTexto: leerVar("--color-texto", "#222222"),
+    colorFondo: leerVar("--color-fondo", "#f5f7f6"),
+    colorGris: leerVar("--color-gris", "#555555"),
+    colorDestacado: leerVar("--color-destacado", "#e2f0ea"),
+    radius: leerVar("--radius", "20px"),
     fontFamily: bodyStyles.fontFamily,
     fontSize: rootStyles.fontSize,
     darkMode: document.body.classList.contains("dark-mode")

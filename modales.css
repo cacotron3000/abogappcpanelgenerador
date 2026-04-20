@@ -3,7 +3,8 @@
 /* Pensado para uso mobile-first y accesibilidad clara */
 
 /* === Modal personalizado === */
-body > .modal {
+body > .modal,
+#app > .modal {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -22,7 +23,8 @@ body > .modal {
 
 
 /* Resto del estilo del modal */
-body > .modal > .modal-contenido {
+body > .modal > .modal-contenido,
+#app > .modal > .modal-contenido {
   background: var(--modal-bg);
   opacity: var(--modal-opacity);
   padding: 2rem;
@@ -40,7 +42,8 @@ body > .modal > .modal-contenido {
 }
 
 /* Cerrar el modal */
-body > .modal > .modal-contenido .modal-cerrar {
+body > .modal > .modal-contenido .modal-cerrar,
+#app > .modal > .modal-contenido .modal-cerrar {
   position: absolute;
   top: 0.5rem;
   right: 1rem;
@@ -50,7 +53,8 @@ body > .modal > .modal-contenido .modal-cerrar {
 }
 
 /* Botón cerrar modal */
-body > .modal > .modal-contenido .modal-cerrar {
+body > .modal > .modal-contenido .modal-cerrar,
+#app > .modal > .modal-contenido .modal-cerrar {
   float: right;
   font-size: 24px;
   cursor: pointer;
@@ -58,7 +62,8 @@ body > .modal > .modal-contenido .modal-cerrar {
   transition: opacity 0.5s ease-in-out;
 }
 
-body > .modal > .modal-contenido .modal-cerrar:hover {
+body > .modal > .modal-contenido .modal-cerrar:hover,
+#app > .modal > .modal-contenido .modal-cerrar:hover {
   color: #000;
 }
 

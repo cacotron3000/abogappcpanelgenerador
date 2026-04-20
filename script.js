@@ -646,6 +646,7 @@ function abrirQuickPanel(titulo, contenidoHtml) {
   t.textContent = titulo;
   c.innerHTML = contenidoHtml;
   panel.classList.remove("oculto");
+  window.__quickPanelJustOpenedAt = Date.now();
 }
 
 function normalizarTipoDetalle(tipo, data = {}) {
@@ -1142,6 +1143,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (quickPanelCerrar && quickPanel) {
     quickPanelCerrar.addEventListener("click", () => quickPanel.classList.add("oculto"));
+  }
+  if (quickPanel) {
+    document.addEventListener("click", (event) => {
+      if (quickPanel.classList.contains("oculto")) return;
+      const justoAbierto = Date.now() - (window.__quickPanelJustOpenedAt || 0) < 180;
+      if (justoAbierto) return;
+      if (quickPanel.contains(event.target)) return;
+      quickPanel.classList.add("oculto");
+    });
   }
 
   if (busquedaGlobalInput && busquedaGlobalResultados) {

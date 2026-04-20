@@ -241,12 +241,29 @@ function callOpenAI(array $config, string $systemPrompt, string $userPrompt, flo
     }
 
     $text = trim((string) ($json['output_text'] ?? ''));
-    if ($text !== '') {
-        return $text;
+    if ($text !== '') return $text;
+
+    if (isset($json['output']) && is_array($json['output'])) {
+        $parts = [];
+        foreach ($json['output'] as $item) {
+            if (!is_array($item)) continue;
+            $content = $item['content'] ?? null;
+            if (!is_array($content)) continue;
+            foreach ($content as $chunk) {
+                if (!is_array($chunk)) continue;
+                if (($chunk['type'] ?? '') === 'output_text' && isset($chunk['text'])) {
+                    $value = trim((string) $chunk['text']);
+                    if ($value !== '') $parts[] = $value;
+                } elseif (isset($chunk['text']) && is_string($chunk['text'])) {
+                    $value = trim($chunk['text']);
+                    if ($value !== '') $parts[] = $value;
+                }
+            }
+        }
+        $joined = trim(implode("\n\n", $parts));
+        if ($joined !== '') return $joined;
     }
-    if (isset($json['output'][0]['content'][0]['text'])) {
-        return trim((string) $json['output'][0]['content'][0]['text']);
-    }
+
     apiFail('OpenAI no devolvió texto utilizable.', 502);
     return '';
 }

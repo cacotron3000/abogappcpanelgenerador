@@ -1694,7 +1694,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             preset: inputPreset?.value || "formal_juridico",
             contexto,
           });
-          if (output) output.value = respuesta?.respuesta || "";
+          const texto = String(respuesta?.respuesta || "").trim();
+          if (output) output.value = texto;
+          if (!texto) {
+            setEstadoChat("La IA respondió sin texto visible. Revisa backend/api.php o intenta nuevamente.", true);
+            return;
+          }
           setEstadoChat("Respuesta generada correctamente.");
         } catch (error) {
           setEstadoChat(error?.message || "No fue posible obtener respuesta de IA.", true);

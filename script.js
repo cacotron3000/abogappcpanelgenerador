@@ -645,6 +645,10 @@ function abrirQuickPanel(titulo, contenidoHtml) {
   if (!panel || !t || !c) return;
   t.textContent = titulo;
   c.innerHTML = contenidoHtml;
+  const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
+  panel.style.position = "absolute";
+  panel.style.top = `${scrollActual}px`;
+  panel.style.height = `${window.innerHeight}px`;
   panel.classList.remove("oculto");
   window.__quickPanelJustOpenedAt = Date.now();
 }
@@ -1148,6 +1152,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (justoAbierto) return;
       if (quickPanel.contains(event.target)) return;
       quickPanel.classList.add("oculto");
+    });
+    window.addEventListener("resize", () => {
+      if (quickPanel.classList.contains("oculto")) return;
+      const scrollActual = window.scrollY || document.documentElement.scrollTop || 0;
+      quickPanel.style.top = `${scrollActual}px`;
+      quickPanel.style.height = `${window.innerHeight}px`;
     });
   }
 

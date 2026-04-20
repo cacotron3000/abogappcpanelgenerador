@@ -252,10 +252,17 @@ function callOpenAI(array $config, string $systemPrompt, string $userPrompt, flo
             foreach ($content as $chunk) {
                 if (!is_array($chunk)) continue;
                 if (($chunk['type'] ?? '') === 'output_text' && isset($chunk['text'])) {
-                    $value = trim((string) $chunk['text']);
+                    $rawText = $chunk['text'];
+                    if (is_array($rawText)) {
+                        $rawText = $rawText['value'] ?? '';
+                    }
+                    $value = trim((string) $rawText);
                     if ($value !== '') $parts[] = $value;
                 } elseif (isset($chunk['text']) && is_string($chunk['text'])) {
                     $value = trim($chunk['text']);
+                    if ($value !== '') $parts[] = $value;
+                } elseif (isset($chunk['text']) && is_array($chunk['text'])) {
+                    $value = trim((string) ($chunk['text']['value'] ?? ''));
                     if ($value !== '') $parts[] = $value;
                 }
             }

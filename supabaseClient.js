@@ -208,11 +208,18 @@
   }
 
   async function chatIA({ mensaje, preset = "formal_juridico", contexto = null } = {}) {
-    const { data } = await apiRequest("chat_ai", {
+    const res = await apiRequest("chat_ai", {
       method: "POST",
       body: { mensaje, preset, contexto },
     });
-    return data || {};
+    const data = res?.data ?? res ?? {};
+    const respuesta = String(
+      data?.respuesta ||
+      data?.output_text ||
+      data?.text ||
+      ""
+    ).trim();
+    return { ...data, respuesta };
   }
 
   window.supabaseSync = {

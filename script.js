@@ -1694,10 +1694,18 @@ document.addEventListener("DOMContentLoaded", async () => {
             preset: inputPreset?.value || "formal_juridico",
             contexto,
           });
-          const texto = String(respuesta?.respuesta || "").trim();
+          const texto = String(
+            respuesta?.respuesta ||
+            respuesta?.output_text ||
+            respuesta?.text ||
+            ""
+          ).trim();
           if (output) output.value = texto;
           if (!texto) {
-            setEstadoChat("La IA respondió sin texto visible. Revisa backend/api.php o intenta nuevamente.", true);
+            const pista = respuesta && Object.keys(respuesta).length
+              ? `Payload recibido sin texto: ${JSON.stringify(respuesta).slice(0, 220)}`
+              : "No se recibió contenido de respuesta.";
+            setEstadoChat(`La IA respondió sin texto visible. ${pista}`, true);
             return;
           }
           setEstadoChat("Respuesta generada correctamente.");
